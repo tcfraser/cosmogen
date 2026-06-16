@@ -1,8 +1,9 @@
 function _init()
     clock=0
+    pal_alt()
     init_map()
     -- init player
-    anchors={{x=0,y=4,dist=0}}
+    anchors={{x=map.start.x,y=map.start.y}}
     crossings={}
 end
 
@@ -13,12 +14,11 @@ function _update60()
     delta = pos(0,0)
     if btnp(0) then delta.x -= 1 end
     if btnp(1) then delta.x += 1 end
-    if delta.x != 0 then try_apply_delta(delta) end
-
-    delta.x = 0
     if btnp(2) then delta.y -= 1 end
     if btnp(3) then delta.y += 1 end
-    if delta.y != 0 then try_apply_delta(delta) end
+
+    try_apply_delta(pos(0,delta.y)) -- resolve vertical first
+    try_apply_delta(pos(delta.x,0)) -- resolve horizontal second
 
     if btnp(5) then
         -- undo
@@ -27,6 +27,10 @@ function _update60()
 end
 
 function try_apply_delta(delta)
+    if pos_zero(delta) then return false end
+
+    last_delta = delta -- stored for drawing astronaut
+
     candidate = anchors[#anchors]
 
     --check forward this much
@@ -36,6 +40,9 @@ function try_apply_delta(delta)
         -- if is_anchor_corner(candidate) then
         --     return false
         -- end
+        if is_blocked(candidate) then
+            return false
+        end
         if is_stable_ground(candidate) and not has_no_anchor(candidate) then
             return false
         end
@@ -112,6 +119,10 @@ function is_stable_ground(p)
     return fget(mget(p.x,p.y),1)
 end
 
+function is_blocked(p)
+    return fget(mget(p.x,p.y),2)
+end
+
 --function is_anchor_corner(p)
 --    if #anchors <= 2 then return false end
 --    for i=2,#anchors-1 do
@@ -127,13 +138,17 @@ end
 --    return false 
 --end
 
-function _draw()
-    cls()
-    local screen = pos_scale(anchors[#anchors], 1/16)
+function update_screen_context()
+    screen = pos_scale(anchors[#anchors], 1/16)
     screen.x = flr(screen.x)
     screen.y = flr(screen.y)
     screen = pos_scale(screen, 16)
     neercs = pos_scale(screen, -1)
+end
+
+function _draw()
+    cls()
+    update_screen_context()
     for x = 0,15 do
         for y = 0,15 do
             spr(mget(x+screen.x,y + screen.y), x*8, y*8)
@@ -164,10 +179,39 @@ function _draw()
         local crossing_screen_pos = pos_scale(pos_add(crossings[i],neercs), 8)
         spr(16 + sprite_offset, crossing_screen_pos.x, crossing_screen_pos.y, 1, 1, crossings[i].flip_x, crossings[i].flip_y)
     end
-    local astronaut_screen_position = pos_scale(pos_add(anchors[#anchors],neercs),8)
-    spr(4, astronaut_screen_position.x, astronaut_screen_position.y)
+    draw_astronaut()
+    draw_debug()
 end
 
+function draw_astronaut()
+    local p = pos_scale(pos_add(anchors[#anchors],neercs),8)
+    local sprite = 12
+    local flip_x = false
+    if last_delta != nil then
+        if last_delta.x != 0 then
+            sprite = 28
+            if last_delta.x < 0 then
+                flip_x = true
+            end
+        end
+        if last_delta.y < 0 then
+            sprite=44
+        end
+    end
+    spr(sprite, p.x, p.y, 1,1, flip_x,false)
+
+    -- black eyes
+    palt(0,false)
+    local sp = sprite_index_to_pos(sprite)
+    local ox,oy = 1,3
+    local dw,dh = 6,3
+    sspr(sp.x+ox,sp.y+oy,dw,dh,p.x+ox,p.y+oy,dw,dh,flip_x,false)
+    palt(0,true)
+end
+
+function sprite_index_to_pos(index)
+    return pos((index % 16) * 8, (index \ 16) * 8)
+end
 
 function draw_oriented_line(a,b)
     c1=6

@@ -7,6 +7,10 @@ function pos_str(p)
     return "("..p.x..","..p.y..")"
 end
 
+function pos_zero(p)
+    return p.x == 0 and p.y == 0
+end
+
 function pos_add(p1, p2)
     return pos(p1.x + p2.x, p1.y + p2.y)
 end
