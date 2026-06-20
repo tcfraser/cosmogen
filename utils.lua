@@ -22,3 +22,12 @@ function wrap(val, low, high)
     if val > high then return val - diff end
     return val
 end
+
+function round(val)
+    local f, c = flr(val), ceil(val)
+    if val-f > c-val then
+        return c
+    else
+        return f
+    end
+end
