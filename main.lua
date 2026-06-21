@@ -1,15 +1,19 @@
 function _init()
     clock=0
     pal_alt()
+    init_utils()
     init_map()
     init_screen()
     init_cable()
+
+    music(4,1000)
 end
 
 function _update60()
     clock += 1 
     if clock == 60 then clock = 0 end
 
+    update_arrows()
     update_critters()
 
     delta = pos(0,0)
@@ -41,6 +45,7 @@ function _draw()
     draw_cable()
     draw_astronaut()
     draw_critters()
+    draw_arrows()
     -- ui layer
     camera(0,0)
     draw_debug()

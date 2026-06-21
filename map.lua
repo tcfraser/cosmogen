@@ -1,5 +1,5 @@
 function init_map()
-    default_asteroid=93
+    default={asteroid=93,space=0}
     asteroid_sprites={
         --      NESW
         126, -- 0000
@@ -27,8 +27,9 @@ function init_map()
         width=128, height=64,
         start=pos(0,0),
     }
-    apply_at_map(replace_player)
+    apply_at_map(replace_astronaut)
     apply_at_map(replace_critters)
+    apply_at_map(replace_arrows)
     apply_at_map(edge_asteroid)
     apply_at_map(edge_wall)
 end
@@ -41,12 +42,6 @@ function apply_at_map(f)
     end
 end
 
-function replace_player(x,y)
-    if mget(x,y) == 4 then -- player sprite
-        map.start = pos(x,y)
-        mset(x,y,default_asteroid)
-    end
-end
 
 function mget_wrapped(x,y)
     x = wrap(x, 0, map.width-1)

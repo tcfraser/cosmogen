@@ -1,14 +1,12 @@
 function replace_critters(x,y)
     if mget(x,y) == 10 then -- critter sprite
         init_critter(x,y)
-        mset(x,y,default_asteroid) 
+        mset(x,y,default.asteroid) 
     end
 end
 
 function init_critter(x,y)
-    if critters == nil then
-        critters = {}
-    end
+    if critters == nil then critters = {} end
     add(critters, {x=x,y=y,collected_at=-1,anim_timer=0,state="idle"})
 end
 

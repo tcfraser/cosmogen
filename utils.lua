@@ -1,3 +1,7 @@
+function init_utils()
+    DIRS={pos(-1,0),pos(1,0),pos(0,-1),pos(0,1)}
+end
+
 function sort_by(t,f)
   for i=1,#t-1 do
     local best=i

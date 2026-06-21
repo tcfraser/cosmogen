@@ -1,3 +1,12 @@
+
+function replace_astronaut(x,y)
+    if mget(x,y) == 12 then -- astronaut sprite
+        map.start = pos(x,y)
+        mset(x,y,default.asteroid)
+    end
+end
+
+
 function draw_astronaut()
     local p = pos_scale(anchors[#anchors], 8)
     local sprite = 12
