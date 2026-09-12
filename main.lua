@@ -14,6 +14,8 @@ function _update60()
     clock += 1 
     if clock == 60 then clock = 0 end
 
+    oxygen_phase=(oxygen_phase+oxygen_speed)%(oxygen_band+oxygen_gap)
+
     update_arrows()
     update_critters()
 

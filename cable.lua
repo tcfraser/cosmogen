@@ -1,30 +1,95 @@
 function init_cable()
-    anchors={{x=map.start.x,y=map.start.y}}
+    anchors={{x=map.start.x,y=map.start.y,end_phase=0}}
     crossings={}
+    oxygen_phase=0
+    oxygen_band=16 -- oxygen length in pixels
+    oxygen_gap=32 -- empty length in pixels
+    oxygen_speed=1 -- pixels per frame; keeps flowing during undo
     sync_critters()
 end
 
-function draw_cable_line(a,b)
-    c1=6
-    c2=7
-    if a != nil and b != nil then
-        -- oriented north, east, south, or west
-        ax=a.x*8+3
-        ay=a.y*8+3
-        bx=b.x*8+3
-        by=b.y*8+3
-        if a.y > b.y then -- north
-            line(ax  , ay, bx  , by, c1)
-            line(ax+1, ay, bx+1, by, c2)
-        elseif a.y < b.y then -- south
-            line(ax+1, ay+1, bx+1, by+1, c1)
-            line(ax  , ay+1, bx  , by+1, c2)
-        elseif a.x < b.x then -- east 
-            line(ax+1, ay  , bx+1, by  , c1)
-            line(ax+1, ay+1, bx+1, by+1, c2)
-        elseif a.x > b.x then -- west 
-            line(ax, ay+1, bx, by+1, c1)
-            line(ax, ay  , bx, by  , c2)
+-- Each destination anchor owns immutable geometry for its incoming segment.
+-- Phase is stored modulo wavelength to avoid large cumulative pixel totals.
+function cache_segment(a,b)
+    local dir=pos_dir(pos_subtract(b,a))
+    b.dx,b.dy=dir.x,dir.y
+    b.length=pos_dist(a,b)*8
+    b.gaps={}
+    b.phase=a.end_phase
+    b.end_phase=(b.phase+b.length)%(oxygen_band+oxygen_gap)
+    b.sx,b.sy=a.x*8+3,a.y*8+3
+    -- first strand origin and second strand offset, preserving shading
+    b.ox,b.oy=0,0
+    if b.dy < 0 then b.ox=1
+    elseif b.dy > 0 then
+        b.sx+=1 b.sy+=1 b.ox=-1
+    elseif b.dx > 0 then
+        b.sx+=1 b.oy=1
+    else
+        b.sy+=1 b.oy=-1
+    end
+end
+
+function draw_cable_span(p,first,last,c1,c2)
+    local ax,ay=p.sx+p.dx*first,p.sy+p.dy*first
+    local bx,by=p.sx+p.dx*last,p.sy+p.dy*last
+    line(ax,ay,bx,by,c1)
+    line(ax+p.ox,ay+p.oy,bx+p.ox,by+p.oy,c2)
+end
+
+-- Draw a visible interval without restarting the oxygen phase.
+function draw_cable_interval(p,lo,hi)
+    if lo > hi then return end
+    draw_cable_span(p,lo,hi,6,7)
+    local wavelength=oxygen_band+oxygen_gap
+    local first=lo+(oxygen_phase-p.phase-lo)%wavelength
+    if first-lo > oxygen_gap then first-=wavelength end
+    while first <= hi do
+        local last=min(flr(hi),ceil(first+oxygen_band)-1)
+        local start=max(lo,ceil(first))
+        if start <= last then draw_cable_span(p,start,last,1,12) end
+        first+=wavelength
+    end
+end
+
+function draw_cable_segment(p,length,extent,cx,cy)
+    if length <= 0 then return end
+    -- Test both strands against this frame's camera before processing gaps
+    -- or oxygen. Bounds also catch segments with both anchors offscreen.
+    local bx,by=p.sx+p.dx*length,p.sy+p.dy*length
+    if max(p.sx,bx)+max(0,p.ox) < cx-1 or
+        min(p.sx,bx)+min(0,p.ox) > cx+128 or
+        max(p.sy,by)+max(0,p.oy) < cy-1 or
+        min(p.sy,by)+min(0,p.oy) > cy+128 then return end
+    local first=0
+    for c in all(p.gaps) do
+        -- A crossing only exists visually once the moving tip reaches it.
+        if not motion or c.anchor_index != motion.index or c.distance <= extent then
+            draw_cable_interval(p,first,min(length,c.gap_start-1))
+            first=max(first,c.gap_end+1)
+            if first > length then return end
+        end
+    end
+    draw_cable_interval(p,first,length)
+end
+
+function cache_crossing(c,p,old)
+    -- The first new crossing goes under, then over, matching the sprites.
+    c.under=(#crossings%2 == 0) and p or old
+    local u=c.under
+    local d=(c.x*8+3-u.sx)*u.dx+(c.y*8+3-u.sy)*u.dy
+    -- Two pixels of upper cable, plus one pixel of clearance on each side.
+    c.gap_start=min(d,d+u.dx+u.dy)-1
+    c.gap_end=c.gap_start+3
+    add(u.gaps,c)
+    u.gaps=sort_by(u.gaps,function(g) return g.gap_start end)
+end
+
+-- Retracting gaps are visual state; discard them when undo finishes.
+function clear_motion_gaps()
+    if motion.dir < 0 then
+        for c in all(motion.crossings) do
+            if c.anchor_index == motion.index then del(c.under.gaps,c) end
         end
     end
 end
@@ -44,6 +109,7 @@ function crossing(a1,a2,b1,b2)
 end
 
 function append_to_path(p)
+    cache_segment(last_anchor(),p)
     add(anchors, p)
     local last = anchors[#anchors-1]
     -- validate_intersection_points
@@ -53,14 +119,18 @@ function append_to_path(p)
         for i = 2, #anchors do
             local crossing_point = crossing(last, p, anchors[i-1], anchors[i])
             if crossing_point != nil then
+                crossing_point.old = anchors[i]
                 crossing_point.anchor_index = #anchors
+                crossing_point.distance = pos_dist(last,crossing_point)*8
                 add(new_crossings, crossing_point)
             end
         end
         new_crossings = sort_by(new_crossings, function(q) return -pos_dist(q,p) end)
-        local new_crossings_order = {}
         for j = 1, #new_crossings do
-            add(crossings, new_crossings[j])
+            local c=new_crossings[j]
+            cache_crossing(c,p,c.old)
+            c.old=nil
+            add(crossings,c)
         end
     end
     sync_critters()
@@ -74,6 +144,8 @@ function pop_from_path()
         for i = 1, count_crossings do
             local j = count_crossings-i+1
             if crossings[j].anchor_index > #anchors then
+                local c=crossings[j]
+                if not motion or motion.dir > 0 then del(c.under.gaps,c) end
                 deli(crossings, j)
             end
         end
@@ -87,11 +159,8 @@ end
 
 function last_move_delta()
     if #anchors<2 then return nil end
-    local a = anchors[#anchors-1]
-    local b = anchors[#anchors]
-    local diff = pos(b.x-a.x,b.y-a.y)
-    local dir = pos_dir(diff)
-    return dir 
+    local p=last_anchor()
+    return pos(p.dx,p.dy)
 end
 
 function attempt_move(delta)
@@ -140,30 +209,18 @@ function is_blocked(p)
 end
 
 function draw_cable()
+    -- Match _draw's rounded camera; visibility is never cached on anchors.
+    local cx,cy=round(screen.interp.x*8),round(screen.interp.y*8)
     local count = motion and motion.index-1 or #anchors
+    local extent=0
+    if motion then extent=pos_dist(motion.a,player_display_pos())*8 end
     for i=2,count do
-        draw_cable_line(anchors[i-1],anchors[i])
+        local p=anchors[i]
+        draw_cable_segment(p,p.length,extent,cx,cy)
     end
     if motion then
-        draw_cable_line(motion.a,player_display_pos())
-    end
-    -- crossings now
-    local over_crossing = false
-    local sprite_offset = 0
-    local visible = motion and motion.crossings or crossings
-    for i = 1, #visible do
-        local c = visible[i]
-        if c.is_vertical and over_crossing or not c.is_vertical and not over_crossing then
-            sprite_offset = 1
-        else
-            sprite_offset = 0
-        end
-        over_crossing = not over_crossing
-        if not motion or c.anchor_index < motion.index or
-            pos_dist(motion.a,c) <= pos_dist(motion.a,player_display_pos()) then
-            local p = pos_scale(c,8)
-            spr(16 + sprite_offset,p.x,p.y,1,1,c.flip_x,c.flip_y)
-        end
+        -- motion.b keeps the removed anchor and its gaps alive during undo
+        draw_cable_segment(motion.b,extent,extent,cx,cy)
     end
 end
 --function is_anchor_corner(p)
@@ -180,4 +237,3 @@ end
 --    end
 --    return false 
 --end
-

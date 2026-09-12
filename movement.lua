@@ -8,7 +8,7 @@ function init_movement()
 end
 
 function start_motion(a,b,index,t,dir,list)
-    local distance=pos_dist(a,b)
+    local distance=b.length/8
     local duration=mid(space_min,distance,space_max)
     if distance == 1 then duration=ground_frames end
     -- a/b stay in cable order even on undo; index is b's anchor index.
@@ -50,7 +50,10 @@ function update_movement()
     if motion then
         motion.t=mid(0,motion.t+motion.dir/motion.duration,1)
         if motion.dir > 0 and motion.t == 1 or
-            motion.dir < 0 and motion.t == 0 then motion=nil end
+            motion.dir < 0 and motion.t == 0 then
+            clear_motion_gaps()
+            motion=nil
+        end
     end
 
     -- simultaneous axes choose vertical; opposing buttons cancel
