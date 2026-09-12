@@ -1,5 +1,9 @@
 # Repository Guidelines
 
+## Core Gameplay Vision
+
+This is intended to be a exploration-based navigation puzzle game inspired by the line-drawing puzzles called "ice-barn" which involve a line tracing a path over tiles that are either `icy` or `ground` where the line must not turn on icy tiles but can cross, while the line can turn on ground tiles but cannot cross. In my implementation, the ground is the same, but ice is replaced thematically with empty space. I've also added wall tiles where the line cannot enter whatsoever. The line then thematically corresponds to an astronauts ``oxygen`` cable that will connect him to various oxygen sources which will act as checkpoints for the player to reset their oxygen line and continue exploring. The vision for the game is to have a sense of exploration inside a maze that is set up by the design of the world, and gets organically constrained even further by the path the player chooses to take to explore.
+
 ## Project Structure & Module Organization
 
 Cosmogen is a PICO-8 game. All source files live in the repository root. `main.p8` is the cartridge: it includes the Lua modules and stores sprites, map data, sprite flags, sound effects, and music.
