@@ -13,17 +13,12 @@ function update_screen()
         screen.timer -= 1
     end
 
-    local p = pos_scale(last_anchor(), 1/16)
+    local p = pos_scale(player_display_pos(), 1/16)
     p.x, p.y = flr(p.x), flr(p.y)
     p = pos_scale(p, 16)
     if not pos_equal(p,screen.current) then
-        if screen.last != nil then
-            screen.timer = screen.transition_time - screen.timer
-            screen.last = screen.current
-        else
-            screen.timer = 0
-            screen.last = p
-        end
+        screen.last = screen.interp or p
+        screen.timer = screen.interp and screen.transition_time or 0
         screen.current = p
     end
     if screen.last == nil then

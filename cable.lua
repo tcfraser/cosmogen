@@ -1,6 +1,7 @@
 function init_cable()
     anchors={{x=map.start.x,y=map.start.y}}
     crossings={}
+    sync_critters()
 end
 
 function draw_cable_line(a,b)
@@ -62,6 +63,7 @@ function append_to_path(p)
             add(crossings, new_crossings[j])
         end
     end
+    sync_critters()
 end
 
 function pop_from_path()
@@ -75,23 +77,8 @@ function pop_from_path()
                 deli(crossings, j)
             end
         end
+        sync_critters()
     end
-end
-
-function resolve_delta(delta)
-    if delta.x != 0 and delta.y != 0 then
-        resolve_delta(pos(0,delta.y)) -- resolve vertical first
-        resolve_delta(pos(delta.x,0)) -- resolve horizontal second
-        return
-    end
-    local lmd = last_move_delta()
-    if lmd != nil then
-        if pos_zero(pos_add(lmd,delta)) then
-            pop_from_path()
-            return
-        end
-    end
-    attempt_move(delta)
 end
 
 function last_anchor()
@@ -153,25 +140,30 @@ function is_blocked(p)
 end
 
 function draw_cable()
-    if #anchors>0 then
-        for i=1,#anchors do
-            if i>1 then
-                draw_cable_line(anchors[i-1],anchors[i])
-            end
-        end
+    local count = motion and motion.index-1 or #anchors
+    for i=2,count do
+        draw_cable_line(anchors[i-1],anchors[i])
+    end
+    if motion then
+        draw_cable_line(motion.a,player_display_pos())
     end
     -- crossings now
     local over_crossing = false
     local sprite_offset = 0
-    for i = 1, #crossings do
-        if crossings[i].is_vertical and over_crossing or not crossings[i].is_vertical and not over_crossing then
+    local visible = motion and motion.crossings or crossings
+    for i = 1, #visible do
+        local c = visible[i]
+        if c.is_vertical and over_crossing or not c.is_vertical and not over_crossing then
             sprite_offset = 1
         else
             sprite_offset = 0
         end
         over_crossing = not over_crossing
-        local crossing_draw_pos = pos_scale(crossings[i],8)
-        spr(16 + sprite_offset, crossing_draw_pos.x, crossing_draw_pos.y, 1, 1, crossings[i].flip_x, crossings[i].flip_y)
+        if not motion or c.anchor_index < motion.index or
+            pos_dist(motion.a,c) <= pos_dist(motion.a,player_display_pos()) then
+            local p = pos_scale(c,8)
+            spr(16 + sprite_offset,p.x,p.y,1,1,c.flip_x,c.flip_y)
+        end
     end
 end
 --function is_anchor_corner(p)
@@ -188,5 +180,4 @@ end
 --    end
 --    return false 
 --end
-
 

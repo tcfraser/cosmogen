@@ -5,6 +5,7 @@ function _init()
     init_map()
     init_screen()
     init_cable()
+    init_movement()
 
     music(4,1000)
 end
@@ -16,22 +17,7 @@ function _update60()
     update_arrows()
     update_critters()
 
-    delta = pos(0,0)
-    if btnp(0) then delta.x -= 1 end
-    if btnp(1) then delta.x += 1 end
-    if btnp(2) then delta.y -= 1 end
-    if btnp(3) then delta.y += 1 end
-
-    resolve_delta(delta)
-
-    if not pos_zero(delta) then
-        last_delta_attempt = delta -- stored for drawing astronaut
-    end
-
-    if btnp(5) then
-        -- undo
-        pop_from_path()
-    end
+    update_movement()
 
     update_screen()
 end

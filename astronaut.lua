@@ -8,7 +8,7 @@ end
 
 
 function draw_astronaut()
-    local p = pos_scale(anchors[#anchors], 8)
+    local p = pos_scale(player_display_pos(), 8)
     local sprite = 12
     local flip_x = false
     local lda = last_delta_attempt

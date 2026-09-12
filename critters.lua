@@ -16,6 +16,12 @@ function update_critters()
         if c.anim_timer >= 60 then
             c.anim_timer = 0
         end
+    end
+end
+
+-- collection changes only when the logical path changes
+function sync_critters()
+    for c in all(critters) do
         if c.collected_at > #anchors then
             c.collected_at = -1
         end
@@ -27,7 +33,8 @@ end
 
 function draw_critters()
     for c in all(critters) do
-        if c.collected_at < 0 then
+        if c.collected_at < 0 or
+            (motion and motion.dir > 0 and c.collected_at == motion.index) then
             local p = pos_scale(c,8)
             local sprite = 10
             if c.anim_timer >= 50 then

@@ -9,6 +9,7 @@ __lua__
 #include critters.lua
 #include arrows.lua
 #include cable.lua
+#include movement.lua
 #include palette.lua
 #include utils.lua
 #include map.lua
