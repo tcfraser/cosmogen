@@ -1,3 +1,6 @@
+-- Creates and animates collectible critters from map markers.
+-- Tracks collection against anchor history so undo restores critters.
+
 function replace_critters(x,y)
     if mget(x,y) == 10 then -- critter sprite
         init_critter(x,y)

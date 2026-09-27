@@ -1,4 +1,6 @@
--- positioning library
+-- Provides position arithmetic, comparisons, distance, and direction helpers.
+-- Interpolates positions for movement and camera animation.
+
 function pos(p_x, p_y)
     return { x=p_x, y=p_y }
 end

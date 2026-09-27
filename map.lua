@@ -1,3 +1,6 @@
+-- Converts map markers into entities and selects terrain edge sprites.
+-- Provides terrain queries and draws the visible map tiles.
+
 function init_map()
     default={asteroid=93,space=0}
     asteroid_sprites={
@@ -27,6 +30,7 @@ function init_map()
         width=128, height=64,
         start=pos(0,0),
     }
+    apply_at_map(replace_tank)
     apply_at_map(replace_astronaut)
     apply_at_map(replace_critters)
     apply_at_map(replace_arrows)
@@ -94,4 +98,3 @@ function draw_map()
         end
     end
 end
-

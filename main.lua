@@ -1,3 +1,6 @@
+-- Initializes the game and coordinates per-frame updates.
+-- Draws the world and UI in their intended layer order.
+
 function _init()
     clock=0
     pal_alt()
@@ -5,7 +8,6 @@ function _init()
     init_map()
     init_screen()
     init_cable()
-    init_movement()
 
     music(4,1000)
 end
@@ -14,11 +16,10 @@ function _update60()
     clock += 1 
     if clock == 60 then clock = 0 end
 
-    oxygen_phase=(oxygen_phase+oxygen_speed)%(oxygen_band+oxygen_gap)
-
     update_arrows()
     update_critters()
 
+    update_cable_draw()
     update_movement()
 
     update_screen()
@@ -30,6 +31,7 @@ function _draw()
     -- world layer
     camera(round(screen.interp.x*8),round(screen.interp.y*8))
     draw_map()
+    draw_tanks()
     draw_cable()
     draw_astronaut()
     draw_critters()

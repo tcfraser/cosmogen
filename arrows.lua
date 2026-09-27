@@ -1,3 +1,6 @@
+-- Builds arrow entities from paired map markers.
+-- Updates their animation timers and draws the arrow indicators.
+
 function draw_arrows()
     local p_offsets = {-1,0,1,0}
     transparency(14)

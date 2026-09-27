@@ -1,3 +1,6 @@
+-- Provides shared direction constants and sorting helpers.
+-- Also supplies number wrapping and rounding.
+
 function init_utils()
     DIRS={pos(-1,0),pos(1,0),pos(0,-1),pos(0,1)}
 end

@@ -1,3 +1,6 @@
+-- Follows the player's animated position with transitions between rooms.
+-- Provides helpers for screen-relative coordinates and map lookups.
+
 function init_screen()
     screen={
         timer = 0,

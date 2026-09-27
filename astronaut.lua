@@ -1,3 +1,5 @@
+-- Reads the astronaut's spawn marker and draws the player.
+-- Uses the animated position and latest movement direction for the sprite.
 
 function replace_astronaut(x,y)
     if mget(x,y) == 12 then -- astronaut sprite

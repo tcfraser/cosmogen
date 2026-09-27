@@ -9,7 +9,9 @@ This is intended to be a exploration-based navigation puzzle game inspired by th
 Cosmogen is a PICO-8 game. All source files live in the repository root. `main.p8` is the cartridge: it includes the Lua modules and stores sprites, map data, sprite flags, sound effects, and music.
 
 - `main.lua` defines `_init`, `_update60`, and `_draw`.
-- `cable.lua` handles cable paths, crossings, and movement.
+- `cable_logic.lua` handles position history, tank connections, and movement rules.
+- `cable_draw.lua` handles cable rendering, crossing caches, and animation.
+- `movement.lua` translates controller input into movement and undo requests.
 - `astronaut.lua`, `critters.lua`, and `arrows.lua` implement game entities.
 - `map.lua` transforms map tiles into terrain and entities; `screen.lua` handles camera transitions.
 - `position.lua`, `utils.lua`, `palette.lua`, and `debug.lua` provide shared helpers.
