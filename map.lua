@@ -90,11 +90,16 @@ end
 function draw_map()
     -- need to determine which region of map should be drawn
     -- based on screen position
+    transparency(14)
     for tx = -1,16 do
         for ty = -1,16 do
-            mx = flr(screen.interp.x) + tx
-            my = flr(screen.interp.y) + ty
-            spr(mget_wrapped(mx,my), mx*8, my*8)
+            local mx = flr(screen.interp.x) + tx
+            local my = flr(screen.interp.y) + ty
+            local map_sprite_index = mget_wrapped(mx,my)
+            if map_sprite_index != 0 then
+                spr(map_sprite_index, mx*8, my*8)
+            end
         end
     end
+    transparency(0)
 end

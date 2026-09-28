@@ -28,6 +28,9 @@ end
 
 function _draw()
     cls()
+    -- background layer
+    camera(0,0)
+    draw_stars()
     -- world layer
     camera(round(screen.interp.x*8),round(screen.interp.y*8))
     draw_map()
