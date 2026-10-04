@@ -30,10 +30,11 @@ function init_map()
         width=128, height=64,
         start=pos(0,0),
     }
+    apply_at_map(replace_arrows)
     apply_at_map(replace_tank)
     apply_at_map(replace_astronaut)
     apply_at_map(replace_critters)
-    apply_at_map(replace_arrows)
+    apply_at_map(replace_doors)
     apply_at_map(edge_asteroid)
     apply_at_map(edge_wall)
 end

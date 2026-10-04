@@ -9,6 +9,9 @@ function init_cable()
     update_tank_connection()
     init_cable_draw()
     sync_critters()
+    -- Initialize doors even when no arrows are collected (or assigned).
+    sync_doors()
+    sync_arrows_add()
 end
 
 -- Tank boundaries are derived from positions, including repeated connections.
@@ -26,6 +29,7 @@ function append_to_path(p)
     add(anchors, p)
     update_tank_connection()
     sync_critters()
+    sync_arrows_add()
     append_cable_draw()
 end
 
@@ -34,6 +38,7 @@ function pop_from_path()
         deli(anchors, #anchors)
         update_tank_connection()
         sync_critters()
+        sync_arrows_remove()
         pop_cable_draw()
     end
 end
@@ -61,29 +66,6 @@ function undo_move()
     pop_from_path()
 end
 
-function attempt_move(delta)
-    if pos_zero(delta) then return false end
-
-    local candidate = last_anchor()
-
-    --check forward this much
-    for s = 1, 32 do
-        -- accumulate one tile each for loop to search outward
-        candidate = pos_add(candidate, delta)
-        if is_blocked(candidate) or tank_blocking_body_at(candidate) then
-            return false
-        end
-        if is_stable_ground(candidate) then
-            if not (tank_connection_at(candidate) or has_no_anchor(candidate)) then
-                return false
-            end
-            -- Commit movement/collection first; animate only accepted moves.
-            append_to_path(candidate)
-            return true
-        end
-    end
-    return false
-end
 
 function has_no_anchor(p)
     for i=last_tank_connection,#anchors do

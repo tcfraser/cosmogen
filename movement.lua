@@ -21,3 +21,27 @@ function update_movement()
     last_delta_attempt=delta
     attempt_move(delta)
 end
+
+function attempt_move(delta)
+    if pos_zero(delta) then return false end
+
+    local candidate = last_anchor()
+
+    --check forward this much
+    for s = 1, 32 do
+        -- accumulate one tile each for loop to search outward
+        candidate = pos_add(candidate, delta)
+        if is_blocked(candidate) or tank_blocking_body_at(candidate) or door_blocking_at(candidate) then
+            return false
+        end
+        if is_stable_ground(candidate) then
+            if not (tank_connection_at(candidate) or has_no_anchor(candidate)) then
+                return false
+            end
+            -- Commit movement/collection first; animate only accepted moves.
+            append_to_path(candidate)
+            return true
+        end
+    end
+    return false
+end

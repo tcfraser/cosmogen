@@ -9,7 +9,7 @@ function _init()
     init_screen()
     init_cable()
 
-    music(4,1000)
+    -- music(4,1000)
 end
 
 function _update60()
@@ -35,6 +35,7 @@ function _draw()
     camera(round(screen.interp.x*8),round(screen.interp.y*8))
     draw_map()
     draw_tanks()
+    draw_doors()
     draw_cable()
     draw_astronaut()
     draw_critters()

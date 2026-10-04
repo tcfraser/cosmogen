@@ -1,4 +1,4 @@
--- Builds arrow entities from paired map markers.
+-- Builds arrow entities from single directional map markers.
 -- Updates their animation timers and draws the arrow indicators.
 
 function draw_arrows()
@@ -10,13 +10,52 @@ function draw_arrows()
         local flip_x = a.dir == 0
         local flip_y = a.dir == 3
         local is_vertical = a.dir >= 2
+        local collected_shift = 0
+        if a.collected_at >= 0 then
+            collected_shift = 81-65
+            po=0
+        end
         if is_vertical then
-            spr(66,a.drawp.x,a.drawp.y+po,1,1,flip_x,flip_y)
+            spr(66+collected_shift,a.drawp.x,a.drawp.y+po,1,1,flip_x,flip_y)
         else
-            spr(65,a.drawp.x+po,a.drawp.y,1,1,flip_x,flip_y)
+            spr(65+collected_shift,a.drawp.x+po,a.drawp.y,1,1,flip_x,flip_y)
         end
     end
     transparency(0)
+end
+
+-- Check only the newly appended segment; keep earlier collection indices.
+function sync_arrows_add()
+    local i = #anchors
+    if i < 2 then return end
+    local p,q = anchors[i-1],anchors[i]
+    local changed = false
+    for a in all(arrows) do
+        if a.collected_at < 0 then
+            local axis,cross = "x","y"
+            if a.dir >= 2 then axis,cross = "y","x" end
+            local d = DIRS[a.dir+1][axis]
+            if p[cross] == a.inp[cross] and q[cross] == a.inp[cross]
+                and (a.inp[axis]-p[axis])*d >= 0
+                and (q[axis]-a.outp[axis])*d >= 0 then
+                a.collected_at = i
+                changed = true
+            end
+        end
+    end
+    if changed then sync_doors() end
+end
+
+-- Called after removing the last anchor.
+function sync_arrows_remove()
+    local changed = false
+    for a in all(arrows) do
+        if a.collected_at == #anchors+1 then
+            a.collected_at = -1
+            changed = true
+        end
+    end
+    if changed then sync_doors() end
 end
 
 function update_arrows()
@@ -28,43 +67,23 @@ function update_arrows()
     end
 end
 
--- arrow replacement below
+
+-- ===== Arrow Map Conversion =====
 function replace_arrows(x,y)
     local sprite = mget(x,y)
-    local is_arrow = fget(sprite,6)
-    if not is_arrow then return end -- only process arrows
-    local is_source = (sprite % 2 == 0)
-    if is_arrow and not is_source then return end -- only process sources
-    process_arrow_source(x,y)
-end
-
-function process_arrow_source(x,y)
-    local is_asteroid = fget(sprite,1)
+    local ground = sprite >= 84 and sprite <= 87
+    if not ground and not (sprite >= 68 and sprite <= 71) then return end
+    -- Markers: left,up,down,right; DIRS: left,right,up,down.
+    local dir = ({0,2,3,1})[sprite%16-3]
     local source = pos(x,y)
-    local sink = nil
-    local dir = -1
-    for i=1,4 do
-        local neighbor = pos_add(source,DIRS[i])
-        local nsprite = mget_wrapped(neighbor.x,neighbor.y)
-        if fget(nsprite,6) then -- is arrow
-            sink = neighbor
-            dir = i-1
-            break
-        end
-    end
-    -- assumed here that sink was found
-    assert(sink != nil)
+    local sink = pos_add(source,DIRS[dir+1])
 
-    if arrows == nil then arrows={} end
+    if arrows == nil then arrows={} end -- creating the arrows table for the first time
+
     local drawp = pos_scale(pos_scale(pos_add(source,sink),1/2),8)
-    add(arrows, {inp=source,outp=sink,drawp=drawp,dir=dir,anim_timer=rnd(120)})
+    add(arrows, {inp=source,outp=sink,drawp=drawp,dir=dir,collected_at=-1,anim_timer=rnd(120)})
 
-    replace_arrow_sprite(source.x, source.y)
-    replace_arrow_sprite(sink.x, sink.y)
-end
-
-function replace_arrow_sprite(x,y)
-    if fget(mget(x,y),1) then
+    if ground then
         mset(x,y,default.asteroid)
     else
         mset(x,y,default.space)

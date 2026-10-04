@@ -24,7 +24,7 @@ function sort_by(t,f)
 end
 
 function wrap(val, low, high)
-    local diff = high - low
+    local diff = high - low + 1 -- inclusive bounds
     if val < low then return val + diff end
     if val > high then return val - diff end
     return val
