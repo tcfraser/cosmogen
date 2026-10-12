@@ -14,7 +14,9 @@ function draw_astronaut()
     local sprite = 12
     local flip_x = false
     local lda = last_delta_attempt
-    if lda ~= nil then
+    if is_overlay_active() then
+        sprite=13
+    elseif lda ~= nil then
         if lda.x ~= 0 then
             sprite = 28
             if lda.x < 0 then
