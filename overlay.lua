@@ -9,17 +9,13 @@ function is_overlay_active()
     return overlay.active
 end
 
-function overlay_room(reset)
+function overlay_room()
     local p=last_anchor()
     local key=flr(p.x/16)..","..flr(p.y/16)
     if not overlay.rooms[key] then
-        overlay.rooms[key]={edges={}}
+        overlay.rooms[key]={cursor=pos(3,3),edges={}}
     end
-    local room=overlay.rooms[key]
-    if reset or not room.cursor then
-        room.cursor=pos(p.x%16,max(0,p.y%16-1))
-    end
-    return room
+    return overlay.rooms[key]
 end
 
 -- Return true while planning owns the controls.
@@ -28,7 +24,6 @@ function update_overlay()
     if toggle and not overlay.toggle then
         overlay.active=not overlay.active
         overlay.release=true
-        if overlay.active then overlay_room(true) end
     end
     overlay.toggle=toggle
     if not overlay.active then
