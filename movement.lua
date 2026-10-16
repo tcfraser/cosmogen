@@ -1,5 +1,6 @@
 -- Reads controller input and turns it into movement or undo requests.
 -- Directional backtracking uses the active cable path.
+local illegal_move
 
 function movement_delta()
     -- simultaneous axes choose vertical; opposing buttons cancel
@@ -12,7 +13,10 @@ function movement_delta()
     return delta
 end
 
-function update_movement()
+function update_movement(blocked)
+    -- Use held buttons, not btnp(), so the marker survives repeat delays.
+    if blocked or (btn() & 0xf)==0 then illegal_move=nil end
+    if blocked then return end
     local delta=movement_delta()
     local reverse=last_move_delta()
     -- opposite movement undoes only along the active cable
@@ -36,16 +40,24 @@ function attempt_move(delta)
         -- accumulate one tile each for loop to search outward
         candidate = pos_add(candidate, delta)
         if is_blocked(candidate) or tank_blocking_body_at(candidate) or door_blocking_at(candidate) then
-            return false
+            break
         end
         if is_stable_ground(candidate) then
             if not (tank_connection_at(candidate) or has_no_anchor(candidate)) then
-                return false
+                break
             end
             -- Commit movement/collection first; animate only accepted moves.
             append_to_path(candidate)
             return true
         end
     end
+    illegal_move=candidate
     return false
+end
+
+function draw_illegal_movement()
+    if not illegal_move then return end
+    transparency(14)
+    spr(6,illegal_move.x*8,illegal_move.y*8)
+    transparency(0)
 end

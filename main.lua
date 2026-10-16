@@ -23,7 +23,7 @@ function _update60()
     update_critters()
 
     update_cable_draw()
-    if not update_overlay() then update_movement() end
+    update_movement(update_overlay())
 
     update_screen()
 end
@@ -47,6 +47,7 @@ function _draw()
     draw_astronaut()
     draw_critters()
     draw_arrows()
+    draw_illegal_movement()
     -- ui layer
     camera(0,0)
     draw_debug()
