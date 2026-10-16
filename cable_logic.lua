@@ -1,17 +1,28 @@
 -- Owns position history, the current tank connection, and movement rules.
 -- Applies moves and undos, then notifies the cable animation code.
 
-function init_cable()
-    anchors={
+function default_anchors()
+    return {
         pos(map.start.x+1,map.start.y), -- starting tank is to the right
         pos(map.start.x,map.start.y)
     }
+end
+
+-- Rebuild collection history without playing moves.
+function init_cable(path)
+    anchors={}
+    for c in all(critters) do c.collected_at=-1 end
+    for a in all(arrows) do a.collected_at=-1 end
+    for p in all(path or default_anchors()) do
+        add(anchors,p)
+        sync_critters()
+        sync_arrows_add()
+    end
     update_tank_connection()
     init_cable_draw()
-    sync_critters()
     -- Initialize doors even when no arrows are collected (or assigned).
     sync_doors()
-    sync_arrows_add()
+    last_delta_attempt=last_move_delta()
 end
 
 -- Tank boundaries are derived from positions, including repeated connections.
