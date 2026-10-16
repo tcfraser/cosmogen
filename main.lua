@@ -19,6 +19,7 @@ function _update60()
     clock += 1 
     if clock == 60 then clock = 0 end
 
+    update_astronaut()
     update_arrows()
     update_critters()
 
